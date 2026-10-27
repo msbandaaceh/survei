@@ -20,8 +20,8 @@ class HalamanSurvei extends CI_Controller
 
             $data['petugas'][] = [
                 'id' => base64_encode($this->encryption->encrypt($row->id)),
-                'nama_petugas' => $data_pegawai['nama_gelar'],
-                'foto' => $this->config->item('sso_server') . $data_pegawai['foto'],
+                'nama_petugas' => $data_pegawai['nama_gelar'] ?? '',
+                'foto' => $data_pegawai['foto'] ? $this->config->item('sso_server') . $data_pegawai['foto'] : '',
                 'posisi' => $row->nama_posisi,
                 'aktif' => $row->aktif
             ];

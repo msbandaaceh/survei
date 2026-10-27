@@ -428,7 +428,13 @@ class HalamanUtama extends MY_Controller
             $pesanWA .= "Demikian diinformasikan, Terima Kasih atas perhatian.";
         }
 
-        $ubah = $this->model->pembaharuan_data('petugas', ['aktif' => $status], 'id', $id);
+        $data = [
+            'status' => $status,
+            'modified_by' => $this->session->userdata('fullname'),
+            'modified_on' => date('Y-m-d H:i:s')
+        ];
+
+        $ubah = $this->model->pembaharuan_data('petugas', $data, 'id', $id);
 
         $dataNotif = array(
             'jenis_pesan' => 'e-supel',
