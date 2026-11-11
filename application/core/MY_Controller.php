@@ -41,51 +41,30 @@ class MY_Controller extends CI_Controller
         }
 
         # Cek Data Aplikasi Ini
-        $this->model->cek_aplikasi($this->config->item('id_app'));
+        if (!$this->session->userdata('e-supel_logged_in')) {
+            $this->model->cek_aplikasi($this->config->item('id_app'));
+            
+            $akses = [
+                'super',
+                'admin_satker',
+                'validator_kepeg_satker',
+                'validator_uk_satker',
+                'validator_ptip_satker'
+            ];
 
-        # Cek Data Pengguna dan Periksa apakah user login sebagai plh/plt atau bukan
-        $token_presensi = "plh/plt";
-        if (!$this->session->userdata('status_plh')) {
-            if (!$this->session->userdata('status_plt')) {
-                $params = [
-                    'tabel' => 'v_users',
-                    'kolom_seleksi' => 'userid',
-                    'seleksi' => $this->session->userdata("userid")
-                ];
-
-                $result = $this->apihelper->get('apiclient/get_data_seleksi', $params);
-
-                if ($result['status_code'] === 200 && $result['response']['status'] === 'success') {
-                    $user_data = $result['response']['data'][0];
-                    $token_presensi = $user_data['token'];
-                    $this->session->set_userdata('jabatan', $user_data['jabatan']);
-                    $this->session->set_userdata('pegawai_id', $user_data['pegawai_id']);
-                    $this->session->set_userdata('id_grup', $user_data['id_grup']);
-                }
+            #Cek peran pegawai
+            if (in_array($this->session->userdata('role'), $akses)) {
+                $this->session->set_userdata('peran', 'admin');
+            } else {
+                $sso_url = $this->config->item('sso_server'); // misalnya simpan di config
+                $this->session->set_flashdata('info', '3');
+                $this->session->set_flashdata('pesan', 'Anda tidak diizinkan mengakses aplikasi ini.');
+                redirect($sso_url);
             }
+
+            $this->session->set_userdata('e-supel_logged_in', TRUE);
         }
 
-        $akses = [
-            'super',
-            'admin_satker',
-            'validator_kepeg_satker',
-            'validator_uk_satker',
-            'validator_ptip_satker'
-        ];
-
-        #Cek peran pegawai
-        if (in_array($this->session->userdata('role'), $akses)) {
-            $this->session->set_userdata('peran', 'admin');
-        } else {
-            $sso_url = $this->config->item('sso_server'); // misalnya simpan di config
-            $this->session->set_flashdata('info', '3');
-            $this->session->set_flashdata('pesan', 'Anda tidak diizinkan mengakses aplikasi ini.');
-            redirect($sso_url);
-        }
-
-        $this->session->set_userdata('ip_satker', $this->get_config_value('34'));
-        $this->session->set_userdata('nama_pengadilan', $this->get_config_value('4'));
-        $this->session->set_userdata('token_now', $token_presensi);
         $this->session->set_userdata('logged_in', TRUE);
     }
 
