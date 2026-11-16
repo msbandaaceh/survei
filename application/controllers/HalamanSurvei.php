@@ -14,14 +14,21 @@ class HalamanSurvei extends CI_Controller
     {
         $query = $this->model->get_seleksi_array('v_petugas', ['aktif' => '1'], ['id' => 'ASC'])->result();
 
+        $semua_pegawai = $this->model->api_semua_data_pegawai();
+
+        $pegawaiMap = [];
+        foreach ($semua_pegawai as $p) {
+            $pegawaiMap[$p['id']] = $p;
+        }
+
         $data = [];
         foreach ($query as $row) {
-            $data_pegawai = $this->model->api_data_pegawai($row->pegawai_id);
+            $pegawai = $pegawaiMap[$row->pegawai_id] ?? null;
 
             $data['petugas'][] = [
                 'id' => base64_encode($this->encryption->encrypt($row->id)),
-                'nama_petugas' => $data_pegawai['nama_gelar'] ?? '',
-                'foto' => $data_pegawai['foto'] ? $this->config->item('sso_server') . $data_pegawai['foto'] : '',
+                'nama_petugas' => $pegawai['nama_gelar'] ?? '-',
+                'foto' => $pegawai['foto'] ? $this->config->item('sso_server') . $pegawai['foto'] : '',
                 'posisi' => $row->nama_posisi,
                 'aktif' => $row->aktif
             ];

@@ -80,6 +80,12 @@ class Model extends CI_Model
 
     function api_semua_data_pegawai()
     {
+        // 1. Cek cache dulu, kalo ada, langsung balik, gak usah HTTP
+        $cached = $this->cache->get('semua_pegawai');
+        if ($cached !== FALSE) {
+            return $cached;
+        }
+
         $params = [
             'tabel' => 'v_pegawai'
         ];
@@ -88,8 +94,16 @@ class Model extends CI_Model
 
         if ($result['status_code'] === 200 && $result['response']['status'] === 'success') {
             $pegawai_data = $result['response']['data'];
+
+            // 2. Simpen ke cache 10 menit
+            $this->cache->save('semua_pegawai', $pegawai_data, 86400);
+
             return $pegawai_data;
         }
+
+        // 3. Kalo gagal, return [] BUKAN null, biar foreach di atas gak error
+        log_message('error', '[API] Gagal ambil semua pegawai, status: ' . ($result['status_code'] ?? 'no response'));
+        return [];
     }
 
     public function get_seleksi_array($tabel, $where = [], $order_by = [])

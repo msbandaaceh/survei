@@ -291,13 +291,20 @@ class HalamanUtama extends MY_Controller
     {
         $query = $this->model->get_seleksi_array('v_petugas', '', ['aktif' => 'DESC', 'id' => 'ASC'])->result();
 
+        $semua_pegawai = $this->model->api_semua_data_pegawai();
+
+        $pegawaiMap = [];
+        foreach ($semua_pegawai as $p) {
+            $pegawaiMap[$p['id']] = $p;
+        }
+
         $data = [];
         foreach ($query as $row) {
-            $data_pegawai = $this->model->api_data_pegawai($row->pegawai_id);
+            $pegawai = $pegawaiMap[$row->pegawai_id] ?? null;
 
             $data[] = [
                 'id' => base64_encode($this->encryption->encrypt($row->id)),
-                'nama_petugas' => $data_pegawai['nama_gelar'],
+                'nama_petugas' => $pegawai['nama_gelar'] ?? '-',
                 'nama_posisi' => $row->nama_posisi,
                 'aktif' => $row->aktif
             ];
@@ -397,6 +404,7 @@ class HalamanUtama extends MY_Controller
         }
 
         if ($result === 1) {
+            $this->cache->delete('semua_pegawai');
             echo json_encode(['success' => 1, 'message' => 'Posisi Jabatan Pelayanan Berhasil Di Simpan']);
         } else {
             echo json_encode(['success' => 3, 'message' => 'Posisi Jabatan Pelayanan Gagal Di Simpan, Periksa Kembali']);
@@ -429,7 +437,7 @@ class HalamanUtama extends MY_Controller
         }
 
         $data = [
-            'status' => $status,
+            'aktif' => $status,
             'modified_by' => $this->session->userdata('fullname'),
             'modified_on' => date('Y-m-d H:i:s')
         ];
@@ -446,6 +454,7 @@ class HalamanUtama extends MY_Controller
         );
 
         $this->model->kirim_notif($dataNotif);
+        $this->cache->delete('semua_pegawai');
 
         if ($ubah == 1) {
             echo json_encode(
@@ -556,7 +565,7 @@ class HalamanUtama extends MY_Controller
         }
 
         // Judul Statistik
-        $judul_statistik = 'STATISTIK PENILAIAN PETUGAS LAYANAN PERIODE '.$periode;
+        $judul_statistik = 'STATISTIK PENILAIAN PETUGAS LAYANAN PERIODE ' . $periode;
 
         // Statistik umum
         $total_responden = count($this->model->all_nilai_petugas_periode($params));
